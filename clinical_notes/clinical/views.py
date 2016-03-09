@@ -35,7 +35,15 @@ def home(request):
         'Authorization': 'Bearer %s' % request.session['access_token'],
     }
 
-    url = 'https://drchrono.com/api/....'
+    patients = {}
+    url = 'https://drchrono.com/api/patients'
+    while url:
+        data = requests.get(url, headers=headers).json()
+	for result in data['results']:
+		id = result['id']
+		name = result['first_name'] + ' ' + result['last_name']
+		patients[id] = name
+	url = data['next']
 
-    context = {}
+    context = {'patients': patients}
     return render(request, 'clinical.html', context)

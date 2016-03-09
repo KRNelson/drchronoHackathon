@@ -1,5 +1,9 @@
 {% extends "index.html" %}
 
 {% block content %} 
-IT WORKED!!!
+	<select name="Patient">
+	{% for id, name in patients.items %}
+		<option value="{{ id }}">{{ name }}</option>
+	{% endfor %}
+	</select>
 {% endblock %}
