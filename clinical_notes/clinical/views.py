@@ -1,5 +1,7 @@
-import sys
+import sys,json
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
+
 sys.path.append("..")
 from SECRET import CLIENT_ID, CLIENT_SECRET
 
@@ -47,3 +49,36 @@ def home(request):
 
     context = {'patients': patients}
     return render(request, 'clinical.html', context)
+
+def fields(request, patient_id=None):
+	clinical_fields = []
+
+	# TODO: Iterate over 6month periods to get all records. 
+	headers = {
+		'Authorization': 'Bearer %s' % request.session['access_token'],
+	}
+
+	date_end = (datetime.date.today() - datetime.timedelta(6*365/12)).isoformat()
+	date_range = date_end + '/' + datetime.date.today().isoformat()
+	url = 'https://drchrono.com/api/clinical_notes?date_range=%s&patient=%s' % (date_range, patient_id)
+	while url:
+		data = requests.get(url, headers=headers).json()
+		for result in data['results']:
+			appointment_id = result['appointment']
+			sections = result['clinical_note_sections']
+			for section in sections:
+				template_id = section['clinical_note_template']
+				
+				template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
+				while template_url:
+					field_data = requests.get(template_url, headers=headers).json()
+					for field_result in field_data['results']:
+						field = field_result['name']
+						data_type = field_result['data_type']
+					
+						if data_type in ["Checkbox", "String", "TwoStrings", "NullCheckbox"] and field not in clinical_fields:
+							clinical_fields.append(field)
+					template_url = field_data['next']
+		url = data['next']
+
+	return JsonResponse({'fields' : clinical_fields})
