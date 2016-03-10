@@ -82,3 +82,47 @@ def fields(request, patient_id=None):
 		url = data['next']
 
 	return JsonResponse({'fields' : clinical_fields})
+
+def values(request, patient_id=None, field_id=None):
+	vals = {}
+
+	headers = {
+		'Authorization': 'Bearer %s' % request.session['access_token'],
+	}
+
+	date_end = (datetime.date.today() - datetime.timedelta(6*365/12)).isoformat()
+	date_range = date_end + '/' + datetime.date.today().isoformat()
+
+	url = 'https://drchrono.com/api/clinical_notes?date_range=%s&patient=%s' % (date_range, patient_id)
+	while url:
+		data = requests.get(url, headers=headers).json()
+		for result in data['results']:
+			appointment_id = result['appointment'] # Lookup appointment date @ end, if appointment has field. 
+			sections = result['clinical_note_sections']
+			for section in sections:
+				template_id = section['clinical_note_template']
+				
+				template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
+				while template_url:
+					field_data = requests.get(template_url, headers=headers).json()
+					for field_result in field_data['results']:
+						if field_result['id']==field_id:
+							appointment_url = 'https://drchrono.com/api/appointments/%s' % (template_id)
+							appointment_data = requests.get(appointment_url, headers=headers).json()
+							date = appointment_data['results'][0]['scheduled_time']
+
+							field_value_url = 'https://drchrono.com/api/clinical_note_fields_values/%s' % (appointment_id)
+							field_value_data = requests.get(field_value_url, headers=headers).json()
+							
+							for val in field_value_data['results']:
+								if val['clinical_note_field']==field_id:
+									# Store value and date. 
+									vals[date] = val['value']
+							
+
+							pass # Get value and store with appointment date.
+					template_url = field_data['next']
+			
+		url = data['next']
+
+	return JsonResponse(vals)
