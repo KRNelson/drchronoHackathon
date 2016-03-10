@@ -51,7 +51,7 @@ def home(request):
     return render(request, 'clinical.html', context)
 
 def fields(request, patient_id=None):
-	clinical_fields = []
+	clinical_fields = {}
 
 	# TODO: Iterate over 6month periods to get all records. 
 	headers = {
@@ -74,14 +74,15 @@ def fields(request, patient_id=None):
 					field_data = requests.get(template_url, headers=headers).json()
 					for field_result in field_data['results']:
 						field = field_result['name']
+						id = field_result['id']
 						data_type = field_result['data_type']
 					
-						if data_type in ["Checkbox", "String", "TwoStrings", "NullCheckbox"] and field not in clinical_fields:
-							clinical_fields.append(field)
+						if data_type in ["Checkbox", "String", "TwoStrings", "NullCheckbox"]:
+							clinical_fields[field] = id
 					template_url = field_data['next']
 		url = data['next']
 
-	return JsonResponse({'fields' : clinical_fields})
+	return JsonResponse(clinical_fields)
 
 def values(request, patient_id=None, field_id=None):
 	vals = {}
@@ -106,21 +107,21 @@ def values(request, patient_id=None, field_id=None):
 				while template_url:
 					field_data = requests.get(template_url, headers=headers).json()
 					for field_result in field_data['results']:
-						if field_result['id']==field_id:
+						if int(field_result['id'])==int(field_id):
 							appointment_url = 'https://drchrono.com/api/appointments/%s' % (template_id)
 							appointment_data = requests.get(appointment_url, headers=headers).json()
+							print(appointment_url)
+							print(appointment_data)
 							date = appointment_data['results'][0]['scheduled_time']
 
-							field_value_url = 'https://drchrono.com/api/clinical_note_fields_values/%s' % (appointment_id)
+							field_value_url = 'https://drchrono.com/api/clinical_note_fields_values/%s?clinical_note_field' % (appointment_id, field_id)
 							field_value_data = requests.get(field_value_url, headers=headers).json()
-							
-							for val in field_value_data['results']:
-								if val['clinical_note_field']==field_id:
-									# Store value and date. 
-									vals[date] = val['value']
-							
 
-							pass # Get value and store with appointment date.
+							for val in field_value_data['results']:
+								# Store value and date. 
+								# Each appointment (ie. day) should have unique values
+								vals[date] = val['value'] 
+
 					template_url = field_data['next']
 			
 		url = data['next']

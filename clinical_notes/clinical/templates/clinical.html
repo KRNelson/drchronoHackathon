@@ -11,8 +11,8 @@
 			data: {},
 			success: function(data) {
 				var opts = JSON.parse(JSON.stringify(data));
-				for (var i in opts.fields) {
-					$('#field_select').append('<option>' + opts.fields[i] + '</option>');
+				for (var key in opts) {
+					$('#field_select').append('<option value="' + opts[key] + '">'  + key + '</option>');
 				}
 			}
 		});
