@@ -1,12 +1,32 @@
 {% extends "index.html" %}
 
+{% block javascript %}
+	function populateFields() {
+		$('#field_select').empty();
+		var patients = document.getElementById("patients");
+		var patient_id = patients.options[patients.selectedIndex].value;
+		$.ajax({
+			type: "GET",
+			url: '/clinical/fields/' + patient_id + '/',
+			data: {},
+			success: function(data) {
+				var opts = JSON.parse(JSON.stringify(data));
+				for (var i in opts.fields) {
+					$('#field_select').append('<option>' + opts.fields[i] + '</option>');
+				}
+			}
+		});
+	}
+{% endblock %}
+
 {% block content %} 
-	<select name="Patient">
+	<select name="Patient" id="patients" onchange="populateFields();">
 	{% for id, name in patients.items %}
 		<option value="{{ id }}">{{ name }}</option>
 	{% endfor %}
 	</select>
 
-	<select name="Field">
+	<select name="Field" id="field_select">
 	</select>
 {% endblock %}
+
