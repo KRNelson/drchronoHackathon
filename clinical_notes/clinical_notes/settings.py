@@ -58,8 +58,8 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-		os.path.join(BASE_DIR, 'clinical_notes/templates'),	
-	],
+        os.path.join(BASE_DIR, 'clinical_notes/templates'), 
+    ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
