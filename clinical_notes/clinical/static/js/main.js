@@ -1,5 +1,5 @@
 function chart(dates, data) {
-    $('#loading').highcharts({
+    $('#chart').highcharts({
         title: {
             text: 'Severity',
             x: -20 //center
@@ -94,6 +94,7 @@ function data_values(data) {
 			url: '/clinical/values/' + patient_id + '/' + template_id + '/' + field_id + '/',
 			data: {},
 			beforeSend: function() {
+				$('#chart').empty();
 				$('#values').empty();
 				html = "<img src='http://k37.kn3.net/taringa/9/0/8/7/0/5/4/amigacho123/6BA.gif'/>";
 				$('#values').html(html);
@@ -109,12 +110,9 @@ function data_values(data) {
 					values = data_values(opts['vals']);
 					chart(dates, values);
 				}
-				else {
-					for (var i in opts['vals']) {
-						html += '<tr><td>' + opts['vals'][i][0] + '</td><td>' + opts['vals'][i][1] + '</td></tr>';
-					}
-					$('#values').html(html);
+				for (var i in opts['vals']) {
+					html += '<tr><td>' + opts['vals'][i][0] + '</td><td>' + opts['vals'][i][1] + '</td></tr>';
 				}
+				$('#values').html(html);
 			}});
 	}
-

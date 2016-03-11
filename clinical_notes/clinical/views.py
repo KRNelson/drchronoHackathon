@@ -71,6 +71,7 @@ def home(request):
 
         for result in data['results']:
             template_id = result['id']
+            template_name = result['name']
             template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
             while template_url:
                 response = requests.get(template_url, headers=headers)
@@ -80,7 +81,7 @@ def home(request):
                 for template_result in template_data['results']:
                     id = template_result['id']
                     name = template_result['name']
-                    fields[str(id) + '-' + str(template_id)] = name
+                    fields[str(id) + '-' + str(template_id)] = template_name + ' - ' + name
                 template_url = template_data['next']
         url = data['next']
 
@@ -90,6 +91,8 @@ def home(request):
 
     # You can store this in your database along with the tokens
     username = data['username']
+
+    fields = sorted(fields.items(), key=lambda x: x[0])
 
     context = {'patients': patients, 'fields': fields, 'username': username}
     return render(request, 'clinical.html', context)
