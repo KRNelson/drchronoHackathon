@@ -5,20 +5,22 @@
 {% endblock %}
 
 {% block content %} 
-	<h1>Hello {{ username }}</h1>
+	<h1><b>Hello {{ username }}</b></h1>
+        <h2>Patients</h2>
 	<select name="Patient" id="patients"">
 	{% for id, name in patients.items %}
 		<option value="{{ id }}">{{ name }}</option>
 	{% endfor %}
 	</select>
 
+	<h2>Fields</h2>
 	<select name="Field" id="field_select">
 	{% for id, name in fields.items %}
 		<option value="{{ id }}">{{ name }}</option>
 	{% endfor %}
 	</select>
 	<button onclick="populateValues();">Get Values</button>
-	<div id="loading">
+	<div id="chart">
 	</div>
 	<table id="values_table">
 		<tr>
