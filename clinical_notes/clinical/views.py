@@ -12,15 +12,27 @@ import requests, datetime, pytz
 def index(request):
     if 'error' in request.GET:
         raise ValueError('Error authorizing application: %s' % request.GET['error'])
-    
-    response = requests.post('https://drchrono.com/o/token/', data={
+
+    #data = {}
+    #if('expires_timestamp' in request.session and (request.session['expires_timestamp']) > datetime.datetime.now()):
+    #    print("Expired!")
+    #    refreshing = True
+    #    data = {
+    #        'refresh_token': request.GET['refresh_token'],
+    #        'grant_type': 'refresh_token',
+    #        'client_id': CLIENT_ID,
+    #        'client_secret': CLIENT_SECRET,
+    #    }
+    #else:
+    data = {
         'code': request.GET['code'],
         'grant_type': 'authorization_code',
         'redirect_uri': 'https://127.0.0.1:8000/clinical/',
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,
-    })
+    }
 
+    response = requests.post('https://drchrono.com/o/token/', data=data)
     response.raise_for_status()
     data = response.json()
 
@@ -40,22 +52,31 @@ def home(request):
     patients = {}
     url = 'https://drchrono.com/api/patients'
     while url:
-        data = requests.get(url, headers=headers).json()
-    for result in data['results']:
-        id = result['id']
-        name = result['first_name'] + ' ' + result['last_name']
-        patients[id] = name
-    url = data['next']
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+        for result in data['results']:
+            id = result['id']
+            name = result['first_name'] + ' ' + result['last_name']
+            patients[id] = name
+        url = data['next']
 
     fields = {}
     url = 'https://drchrono.com/api/clinical_note_templates'
     while url:
-        data = requests.get(url, headers=headers).json()
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
         for result in data['results']:
             template_id = result['id']
             template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
             while template_url:
-                template_data = requests.get(template_url, headers=headers).json()
+                response = requests.get(template_url, headers=headers)
+                response.raise_for_status()
+                template_data = response.json()
+
                 for template_result in template_data['results']:
                     id = template_result['id']
                     name = template_result['name']
@@ -85,25 +106,24 @@ def values(request, patient_id=None, template_id=None, field_id=None):
 
     url = 'https://drchrono.com/api/clinical_notes?date_range=%s&patient=%s' % (date_range, patient_id)
     while url:
-        data = requests.get(url, headers=headers).json()
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
         for result in data['results']:
             appointment_id = result['appointment'] # Lookup appointment date @ end, if appointment has field. 
             field_value_url = 'https://drchrono.com/api/clinical_note_field_values?appointment=%s&clinical_note_field=%s&clinical_note_template=%s' % (appointment_id, field_id, template_id)
 
             # Extract data from url
-            field_value = requests.get(field_value_url, headers=headers)
-            field_value_data = None
+            response = requests.get(field_value_url, headers=headers)
+            response.raise_for_status()
+            field_value_data = response.json()
 
-            # Check if anything was returned, template might not contain field?
-            #    If it does not, simply continue.
-            if field_value.status_code!=200:
-                continue
-            else:
-                field_value_data = field_value.json()
-
-            
             appointment_url = 'https://drchrono.com/api/appointments/%s' % (appointment_id)
-            appointment_data = requests.get(appointment_url, headers=headers).json()
+            response = requests.get(appointment_url, headers=headers)
+            response.raise_for_status()
+            appointment_data = response.json()
+
             date = appointment_data['scheduled_time']
 
             if(int(field_value_data['count'])!=1):
