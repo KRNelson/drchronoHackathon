@@ -51,16 +51,16 @@ def home(request):
     url = 'https://drchrono.com/api/clinical_note_templates'
     while url:
         data = requests.get(url, headers=headers).json()
-    for result in data['results']:
-        template_id = result['id']
-        template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
-        while template_url:
-            template_data = requests.get(template_url, headers=headers).json()
-            for template_result in template_data['results']:
-                id = template_result['id']
-                name = template_result['name']
-                fields[str(id) + '-' + str(template_id)] = name
-            template_url = template_data['next']
+        for result in data['results']:
+            template_id = result['id']
+            template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
+            while template_url:
+                template_data = requests.get(template_url, headers=headers).json()
+                for template_result in template_data['results']:
+                    id = template_result['id']
+                    name = template_result['name']
+                    fields[str(id) + '-' + str(template_id)] = name
+                template_url = template_data['next']
         url = data['next']
 
     response = requests.get('https://drchrono.com/api/users/current', headers=headers);
