@@ -1,0 +1,28 @@
+body {
+	margin-left:25px;
+}
+
+table {
+	border-collapse:collapse;
+}
+
+td {
+	border-style:solid;
+	padding: 10px;
+}
+
+.even_row {
+	background-color:linen;
+}
+
+.odd_row {
+}
+
+#values_table img {
+	height: 100px;
+	width: auto;
+}
+
+#chart {
+	width: 50%;
+}

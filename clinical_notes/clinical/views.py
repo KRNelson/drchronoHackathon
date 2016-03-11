@@ -8,31 +8,17 @@ from SECRET import CLIENT_ID, CLIENT_SECRET
 import requests, datetime, pytz
 
 # Create your views here.
-
 def index(request):
     if 'error' in request.GET:
         raise ValueError('Error authorizing application: %s' % request.GET['error'])
 
-    #data = {}
-    #if('expires_timestamp' in request.session and (request.session['expires_timestamp']) > datetime.datetime.now()):
-    #    print("Expired!")
-    #    refreshing = True
-    #    data = {
-    #        'refresh_token': request.GET['refresh_token'],
-    #        'grant_type': 'refresh_token',
-    #        'client_id': CLIENT_ID,
-    #        'client_secret': CLIENT_SECRET,
-    #    }
-    #else:
-    data = {
+    response = requests.post('https://drchrono.com/o/token/', data = {
         'code': request.GET['code'],
         'grant_type': 'authorization_code',
         'redirect_uri': 'https://127.0.0.1:8000/clinical/',
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,
-    }
-
-    response = requests.post('https://drchrono.com/o/token/', data=data)
+    })
     response.raise_for_status()
     data = response.json()
 

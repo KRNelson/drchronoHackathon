@@ -96,29 +96,40 @@ function data_values(data) {
 			data: {},
 			beforeSend: function() {
 				$('#chart').empty();
-				$('#values').empty();
+				$('#values_table').empty();
 				html = "<img src='http://k37.kn3.net/taringa/9/0/8/7/0/5/4/amigacho123/6BA.gif'/>";
-				$('#values').html(html);
+				$('#values_table').html(html);
 			},
 			complete: function() {
-				$('#values img').remove();
+				$('#values_table img').remove();
 			},
 			success: function(data) {
 				var opts = JSON.parse(JSON.stringify(data));
 				var html = '';
 				if(opts['vals'].length==0) {
-					opts['vals'].push([" T ", "No values available"]);
+					//opts['vals'].push([" T ", "No values available"]);
+					html = '<tr class="even_row"><td>No values available.</td></tr>';
+					$('#values_table').html(html);
+					return;
 				}
 				else if(field_id == "28217931") {
 					dates = data_dates(opts['vals']);
 					values = data_values(opts['vals']);
 					chart(dates, values);
 				}
+				// For some reason, the table headers to not display....
+				html += '<tr><th>Date</th><th>Time</th><th>Value</th></tr>';
+				html += '<tbody id="values">';
 				for (var i in opts['vals']) {
-					date = opts['vals'][i][0].split("T")[0]
-					time = opts['vals'][i][0].split("T")[1]
-					html += '<tr><td>' + date + '</td><td>' + time + '</td><td>' + opts['vals'][i][1] + '</td></tr>';
+					date = opts['vals'][i][0].split("T")[0];
+					time = opts['vals'][i][0].split("T")[1];
+					row_class="odd_row";
+					if(i%2==0) {
+						row_class="even_row";
+					}
+					html += '<tr class="' + row_class + '"><td>' + date + '</td><td>' + time + '</td><td>' + opts['vals'][i][1] + '</td></tr>';
 				}
-				$('#values').html(html);
+				html += '</tbody>';
+				$('#values_table').html(html);
 			}});
 	}
