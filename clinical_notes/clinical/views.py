@@ -47,44 +47,33 @@ def home(request):
 		patients[id] = name
 	url = data['next']
 
-    context = {'patients': patients}
+    fields = {}
+    url = 'https://drchrono.com/api/clinical_note_templates'
+    while url:
+        data = requests.get(url, headers=headers).json()
+	for result in data['results']:
+		template_id = result['id']
+		template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
+		while template_url:
+			template_data = requests.get(template_url, headers=headers).json()
+			for template_result in template_data['results']:
+				id = template_result['id']
+				name = template_result['name']
+				fields[str(id) + '-' + str(template_id)] = name
+			template_url = template_data['next']
+        url = data['next']
+
+    response = requests.get('https://drchrono.com/api/users/current', headers=headers);
+    response.raise_for_status()
+    data = response.json()
+
+    # You can store this in your database along with the tokens
+    username = data['username']
+
+    context = {'patients': patients, 'fields': fields, 'username': username}
     return render(request, 'clinical.html', context)
 
-def fields(request, patient_id=None):
-	clinical_fields = {}
-
-	# TODO: Iterate over 6month periods to get all records. 
-	headers = {
-		'Authorization': 'Bearer %s' % request.session['access_token'],
-	}
-
-	date_end = (datetime.date.today() - datetime.timedelta(6*365/12)).isoformat()
-	date_range = date_end + '/' + datetime.date.today().isoformat()
-	url = 'https://drchrono.com/api/clinical_notes?date_range=%s&patient=%s' % (date_range, patient_id)
-	while url:
-		data = requests.get(url, headers=headers).json()
-		for result in data['results']:
-			appointment_id = result['appointment']
-			sections = result['clinical_note_sections']
-			for section in sections:
-				template_id = section['clinical_note_template']
-				
-				template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
-				while template_url:
-					field_data = requests.get(template_url, headers=headers).json()
-					for field_result in field_data['results']:
-						field = field_result['name']
-						id = field_result['id']
-						data_type = field_result['data_type']
-					
-						if data_type in ["Checkbox", "String", "TwoStrings", "NullCheckbox"]:
-							clinical_fields[field] = id
-					template_url = field_data['next']
-		url = data['next']
-
-	return JsonResponse(clinical_fields)
-
-def values(request, patient_id=None, field_id=None):
+def values(request, patient_id=None, template_id=None, field_id=None):
 	vals = {}
 
 	headers = {
@@ -99,31 +88,31 @@ def values(request, patient_id=None, field_id=None):
 		data = requests.get(url, headers=headers).json()
 		for result in data['results']:
 			appointment_id = result['appointment'] # Lookup appointment date @ end, if appointment has field. 
-			sections = result['clinical_note_sections']
-			for section in sections:
-				template_id = section['clinical_note_template']
-				
-				template_url = 'https://drchrono.com/api/clinical_note_field_types?clinical_note_template=%s' % (template_id)
-				while template_url:
-					field_data = requests.get(template_url, headers=headers).json()
-					for field_result in field_data['results']:
-						if int(field_result['id'])==int(field_id):
-							appointment_url = 'https://drchrono.com/api/appointments/%s' % (template_id)
-							appointment_data = requests.get(appointment_url, headers=headers).json()
-							print(appointment_url)
-							print(appointment_data)
-							date = appointment_data['results'][0]['scheduled_time']
+			field_value_url = 'https://drchrono.com/api/clinical_note_field_values?appointment=%s&clinical_note_field=%s&clinical_note_template=%s' % (appointment_id, field_id, template_id)
 
-							field_value_url = 'https://drchrono.com/api/clinical_note_fields_values/%s?clinical_note_field' % (appointment_id, field_id)
-							field_value_data = requests.get(field_value_url, headers=headers).json()
+			# Extract data from url
+			field_value = requests.get(field_value_url, headers=headers)
+			field_value_data = None
 
-							for val in field_value_data['results']:
-								# Store value and date. 
-								# Each appointment (ie. day) should have unique values
-								vals[date] = val['value'] 
+			# Check if anything was returned, template might not contain field?
+			#    If it does not, simply continue.
+			if field_value.status_code!=200:
+				continue
+			else:
+				field_value_data = field_value.json()
 
-					template_url = field_data['next']
 			
+			appointment_url = 'https://drchrono.com/api/appointments/%s' % (appointment_id)
+			appointment_data = requests.get(appointment_url, headers=headers).json()
+			date = appointment_data['scheduled_time']
+
+			if(int(field_value_data['count'])!=1):
+				continue # Should have only recieved a single response. 
+					 #   0 or more than 1 returned. 
+			else:
+				vals[date] = field_value_data['results'][0]['value']
+
 		url = data['next']
 
+	vals = {'vals': sorted(vals.items(), key=lambda x: x[0])}
 	return JsonResponse(vals)
