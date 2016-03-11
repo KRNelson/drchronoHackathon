@@ -29,6 +29,7 @@ function data_dates(data) {
 	dates = [];
 	for(var i in data) {
 		date = data[i][0];
+		date = date.replace("T", " @ ");
 		dates.push(date);
 	}
 	return dates;
@@ -105,13 +106,18 @@ function data_values(data) {
 			success: function(data) {
 				var opts = JSON.parse(JSON.stringify(data));
 				var html = '';
-				if(field_id == "28217931") {
+				if(opts['vals'].length==0) {
+					opts['vals'].push([" T ", "No values available"]);
+				}
+				else if(field_id == "28217931") {
 					dates = data_dates(opts['vals']);
 					values = data_values(opts['vals']);
 					chart(dates, values);
 				}
 				for (var i in opts['vals']) {
-					html += '<tr><td>' + opts['vals'][i][0] + '</td><td>' + opts['vals'][i][1] + '</td></tr>';
+					date = opts['vals'][i][0].split("T")[0]
+					time = opts['vals'][i][0].split("T")[1]
+					html += '<tr><td>' + date + '</td><td>' + time + '</td><td>' + opts['vals'][i][1] + '</td></tr>';
 				}
 				$('#values').html(html);
 			}});
