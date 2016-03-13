@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
-import os
+import os,sys
+
+sys.path.append("..")
+from DATABASE_SECRETS import DATABASE, USERNAME, PASSWORD
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +34,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'clinical_improved.apps.ClinicalImprovedConfig',
     'clinical.apps.ClinicalConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -80,8 +84,10 @@ WSGI_APPLICATION = 'clinical_notes.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': DATABASE,
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': USERNAME,
+        'PASSWORD': PASSWORD,
     }
 }
 
