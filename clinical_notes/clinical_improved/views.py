@@ -156,9 +156,7 @@ def execute(request):
         appointments = [Appointment(id=id, patient_id=patient, date_time=date_time) for id, date_time in appointments.items() if id not in saved_appointments]
         Appointment.objects.bulk_create(appointments)
  
-    # For each appointment, get all the values for all templates that are avaible. 
     for appointment in Appointment.objects.all():
-        # Currently 290 total fields. If all are blank, with 1second pause, takes about 5minutes to execute for each appointment. 
         values = get_values(appointment.id, headers)
         if values:
             value_models = []
@@ -171,7 +169,8 @@ def execute(request):
                     
             Value.objects.bulk_create(value_models)
 
-   
+    return view(request)
+
 def view(request):
     context = {}
     patients = Patient.objects.all()
