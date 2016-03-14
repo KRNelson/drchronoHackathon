@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.core import serializers
+from django.core.serializers.json import DjangoJSONEncoder
 
-import sys
+import sys,json
 sys.path.append("..")
 from DATABASE_SECRETS import DATABASE, USERNAME, PASSWORD
 from SECRET import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI
@@ -183,12 +183,14 @@ def view(request):
 # Custom api call
 # Given a patient_id, return all fields which have any values filled in. 
 def fields(request, patient_id):
-    fields = Value.objects.filter(patient_id=patient_id).values('field_id', 'field__name', 'template_id', 'template__name').distinct() # might be 'field_id__name' & 'template_id__name'
-    fields = serializers.serialize('json', fields)
-    return JsonResponse(fields)
+    fields = Value.objects.filter(patient_id=patient_id).values_list('field_id', 'field_id__name', 'template_id', 'template_id__name').distinct()
+    fields = [{'field_id': field[0], 'field_name': field[1], 'template_id': field[2], 'template_name': field[3]} for field in fields]
+    return JsonResponse({'fields': fields})
 
 def values(request, patient_id, template_id, field_id):
-    values = Value.objects.filter(patient_id=patient_id, template_id=template_id, field_id=field_id).values('appointment__date_time', 'value')
-    # Series of appointments with values associated
-    values = serializers.searialize('json', values)
-    return JsonResponse(values)
+    values = Value.objects.filter(patient_id=patient_id, template_id=template_id, field_id=field_id).values_list('appointment_id__date_time', 'value')
+    values = [{'date_time': value[0], 'value': value[1]} for value in values]
+
+    values = sorted(values, key=lambda x: x['date_time'])
+
+    return JsonResponse({'values': values})
