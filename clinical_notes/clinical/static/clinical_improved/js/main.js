@@ -40,40 +40,16 @@ function data_values(data) {
 	values = [];
 	for(var i in data) {
 		value = data[i]['value'];
-		if($.trim(value)=="1 out of 10") {
-			value = 1;
-		}
-		else if($.trim(value)=="2 out of 10") {
-			value = 2;
-		}
-		else if($.trim(value)=="3 out of 10") {
-			value = 3;
-		}
-		else if($.trim(value)=="4 out of 10") {
-			value = 4;
-		}
-		else if($.trim(value)=="5 out of 10") {
-			value = 5;
-		}
-		else if($.trim(value)=="6 out of 10") {
-			value = 6;
-		}
-		else if($.trim(value)=="7 out of 10") {
-			value = 7;
-		}
-		else if($.trim(value)=="8 out of 10") {
-			value = 8;
-		}
-		else if($.trim(value)=="9 out of 10") {
-			value = 9;
-		}
-		else if($.trim(value)=="10 out of 10") {
-			value = 10;
-		}
-		else {
-			value=0;
-		}
-
+        // Note: Some values are not out of 10.
+        regex = /(\d+) out of 10/g;
+        match = regex.exec(value);
+        if(match==null) {
+            value = 0;
+        }
+        else {
+            alert(match[1]);
+            value = parseInt(match[1]);
+        }
 		values.push(value);
 	}
 	return values;
@@ -129,7 +105,6 @@ function data_values(data) {
 			},
 			success: function(data) {
 				var html = '';
-                alert(JSON.stringify(data))
 				if(field_id == "28217931") {
 					dates = data_dates(data['values']);
 					values = data_values(data['values']);
