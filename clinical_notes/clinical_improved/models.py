@@ -4,20 +4,25 @@ from django.db import models
 
 # Create your models here.
 class Patient(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     name = models.CharField(max_length=100)
 
 class Appointment(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
     date_time = models.DateTimeField()
 
 class Template(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     name = models.CharField(max_length=100)
 
 class Field(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     template_id = models.ForeignKey(Template, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
 class Value(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
     appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
     template_id = models.ForeignKey(Template, on_delete=models.CASCADE)
